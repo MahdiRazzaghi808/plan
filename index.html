@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاسبه قیمت پروژه</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --background-light: #f9f9f9;
+            --border-color: #ddd;
+            --shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        .container {
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin: 15px 0;
+        }
+
+        select,
+        input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .result {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 20px;
+        }
+
+        .plan-details {
+            text-align: right;
+            background: var(--background-light);
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        .feature-list {
+            padding: 0;
+            list-style: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>محاسبه قیمت پروژه</h2>
+
+        <div class="form-group">
+            <label>حالت پروژه</label>
+            <select id="mode">
+                <option value="full">UI + فرانت + بک + داکرایز + دپلوی</option>
+                <option value="backend">UI + فرانت + بک</option>
+                <option value="frontendUI">UI + فرانت</option>
+                <option value="frontend">فرانت</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>پلن پروژه</label>
+            <select id="plan">
+                <option value="A">پلن A</option>
+                <option value="B">پلن B</option>
+                <option value="C">پلن C</option>
+                <option value="D">پلن D</option>
+                <option value="E">پلن E</option>
+                <option value="F">پلن F</option>
+                <option value="G">پلن G</option>
+            </select>
+        </div>
+
+        <!-- <div class="form-group">
+            <label>مدت زمان پروژه (<span id="daysLabel">30</span> روز)</label>
+            <input type="range" id="days" min="-30" max="90" value="0">
+        </div> -->
+
+        <div class="form-group">
+            <label>سطح UI</label>
+            <select id="uiLevel">
+                <option value="2">سطح 1</option>
+                <option value="4">سطح 2</option>
+                <option value="6">سطح 3</option>
+                <option value="8">سطح 4</option>
+                <option value="10">سطح 5</option>
+            </select>
+        </div>
+
+        <div class="plan-details" id="planDetails"></div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            BASE_PRICE: 11_000_000,
+            PRICING_MODIFIERS: {
+                full: 1.5,
+                backend: 2,
+                frontendUI: 1.0,
+                frontend: 1.25
+            },
+            PLANS: {
+                A: createPlan(0.6, -15, 15, [
+                    "صفحات استاتیک با HTML/CSS",
+                    "رسپانسیو پایه",
+                    "کار با APIهای ساده",
+                    "بدون احراز هویت",
+                    "صفحه اصلی",
+                    "صفحه درباره ما",
+                    "صفحه تماس با ما",
+                    "صفحه محصولات",
+                    "صفحه هر محصول",
+                    "صفحه علاقه‌مندی‌ها",
+                    "پنل ادمین ساده"
+                ]),
+                B: createPlan(1.75, -30, 30, [
+                    "تمام امکانات پلن A",
+                    "فرم‌های تعاملی پیشرفته",
+                    "اعتبارسنجی فرم‌ها",
+                    "پویانمایی‌های CSS متوسط",
+                    "یکپارچه‌سازی با REST API",
+                    "سیستم تیکتینگ ساده"
+                ]),
+                C: createPlan(3, -60, 60, [
+                    "تمام امکانات پلن B",
+                    "سیستم احراز هویت کامل",
+                    "مدیریت حساب کاربری پیشرفته",
+                    "چت انلاین (مثل گفتینو و ...)",
+                    "فروشگاه آنلاین (E-commerce)",
+                    "پنل مدیریت محتوا پیشرفته",
+                    "سیستم پرداخت آنلاین امن"
+                ]),
+                D: createPlan(5, -90, 90, [
+                    "تمام امکانات پلن C",
+                    "فروشگاه آنلاین پیشرفته (Market Place)",
+                    "داشبورد مدیریتی پیشرفته",
+                    "نقشه تعاملی برای نمایش مکان‌ها",
+                    "سئو پیشرفته (SSR/ISR)",
+                    "بهینه سازی کامپوننت ها و تست رفتار",
+                    "سیستم احراز هویت کامل به همراه نقش های مختلف و سطح دسترسی های متفاوت"
+                ]),
+                E: createPlan(7, -120, 120, [
+                    "تمام امکانات پلن D",
+                    "CMS اختصاصی با امکانات سفارشی",
+                    "آزمایش A/B برای بهینه‌سازی تجربه کاربری",
+                    "پشتیبانی از Progressive Web App (PWA)"
+                ]),
+                F: createPlan(10, -150, 150, [
+                    "تمام امکانات پلن E",
+                    "تحلیل رفتار کاربر (Heatmaps)",
+                    "یکپارچه‌سازی نمای سه بعدی (Three.js)",
+                    "داشبوردهای تحلیلی پیشرفته",
+                    "بهینه‌سازی عملکرد حرفه‌ای"
+                ]),
+                G: createPlan(12, -180, 180, [
+                    "تمام امکانات پلن F",
+                    "چت Real-time با Socket.io",
+                    "کار با WebGL/Three.js برای گرافیک تعاملی",
+                    "پشتیبانی از نقشه‌های پیشرفته و GIS",
+                    "ویدئو کنفرانس با WebRTC",
+                    "هوش مصنوعی سمت کلاینت",
+                    "پشتیبانی از WebAssembly",
+                    "سیستم تیکتینگ پیشرفته با هوش مصنوعی"
+                ]),
+                H: createPlan(14, -210, 210, [
+                    "تمام امکانات پلن G",
+                    "یکپارچه‌سازی با میکروسرویس‌ها",
+                    "سیستم پیشنهاد هوشمند با AI",
+                    "شخصی‌سازی پویا با هوش مصنوعی",
+                    "پشتیبانی از PWA پیشرفته",
+                    "بهینه‌سازی برای Web3 و بلاکچین",
+                    "سیستم امنیتی و رمزنگاری پیشرفته"
+                ])
+            }
+        };
+
+        function createPlan(base, min, max, features) {
+            return { base, min, max, features };
+        }
+
+        function initialize() {
+            const elements = {
+                mode: document.getElementById('mode'),
+                plan: document.getElementById('plan'),
+                days: document.getElementById('days'),
+                uiLevel: document.getElementById('uiLevel'),
+                daysLabel: document.getElementById('daysLabel'),
+                planDetails: document.getElementById('planDetails'),
+                result: document.getElementById('result')
+            };
+
+            // ['mode', 'plan', 'days', 'uiLevel'].forEach(id => {
+            //     document.getElementById(id).addEventListener('input', updateCalculations);
+            // });
+            ['mode', 'plan', 'uiLevel'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateCalculations);
+            });
+
+            updatePlanDetails();
+            updateCalculations();
+        }
+
+        function updatePlanDetails() {
+            const plan = CONFIG.PLANS[document.getElementById('plan').value];
+            const detailsElement = document.getElementById('planDetails');
+
+            detailsElement.innerHTML = `
+                <strong>ویژگی‌های پلن ${document.getElementById('plan').value}:</strong>
+                <ul class="feature-list">
+                    ${plan.features.map(f => `<li>✅ ${f}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        function calculatePrice() {
+            const plan = CONFIG.PLANS[document.getElementById('plan').value];
+            // const days = parseInt(document.getElementById('days').value);
+            const uiLevel = parseFloat(document.getElementById('uiLevel').value);
+            const mode = document.getElementById('mode').value;
+
+            // const timeFactor = 1.5 - ((days - plan.min) / (plan.max - plan.min)) * 0.7;
+
+
+
+            let result = 0;
+
+            const frontendPrice = ((plan.base * 0.40) + (uiLevel / 3.2)) * CONFIG.BASE_PRICE;
+            const UIPrice = (uiLevel / 2.5 + (plan.base * 0.1)) * CONFIG.BASE_PRICE;
+            const backendPrice = ((plan.base * 0.60) + CONFIG.PRICING_MODIFIERS.backend) * CONFIG.BASE_PRICE;
+            const fullPrice = (CONFIG.PRICING_MODIFIERS.full) * CONFIG.BASE_PRICE
+
+
+            console.log(frontendPrice);
+            console.log(UIPrice);
+            console.log(backendPrice);
+            console.log(fullPrice);
+
+
+            if (mode === "frontend") {
+                result = frontendPrice
+            } else if (mode === "frontendUI") {
+                result = frontendPrice + UIPrice
+            } else if (mode === "backend") {
+                result = frontendPrice + UIPrice + backendPrice
+            } else if (mode === "full") {
+                result = frontendPrice + UIPrice + backendPrice + fullPrice
+            }
+
+            return result;
+        }
+
+        function updateCalculations(e) {
+
+
+            updatePlanDetails();
+
+            const price = calculatePrice().toLocaleString();
+            document.getElementById('result').textContent = `قیمت نهایی: ${price} تومان`;
+        }
+
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+
+</html>
